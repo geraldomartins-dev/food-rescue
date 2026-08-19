@@ -1,0 +1,9 @@
+node_modules/
+.env
+coverage/
+test-results/
+playwright-report/
+storage/comprovantes/*.pdf
+*.log
+.DS_Store
+Thumbs.db

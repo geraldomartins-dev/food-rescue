@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Food Rescue conecta estabelecimentos doadores e ONGs para reduzir o desperdício de alimentos.">
+  <title>Food Rescue</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Food Rescue - início">
+      <span class="brand-mark" aria-hidden="true">FR</span>
+      <span>Food Rescue</span>
+    </a>
+    <div id="session-actions"></div>
+  </header>
+
+  <main id="app" tabindex="-1">
+    <section class="hero" id="auth-view">
+      <div class="hero-copy">
+        <p class="eyebrow">Alimento bom não vai para o lixo</p>
+        <h1>Conectamos excedentes a quem transforma cuidado em ação.</h1>
+        <p class="hero-text">Uma plataforma simples para estabelecimentos doarem alimentos com segurança e ONGs organizarem resgates locais.</p>
+        <div class="impact-row" aria-label="Benefícios da plataforma">
+          <div><strong>Menos</strong><span>desperdício</span></div>
+          <div><strong>Mais</strong><span>impacto local</span></div>
+          <div><strong>Todo</strong><span>fluxo registrado</span></div>
+        </div>
+      </div>
+
+      <div class="auth-card">
+        <div class="tabs" role="tablist" aria-label="Acesso">
+          <button class="tab active" id="login-tab" role="tab" aria-selected="true">Entrar</button>
+          <button class="tab" id="register-tab" role="tab" aria-selected="false">Criar conta</button>
+        </div>
+
+        <form id="login-form" class="form-stack">
+          <div><label for="login-email">E-mail</label><input id="login-email" name="email" type="email" autocomplete="email" required></div>
+          <div><label for="login-password">Senha</label><input id="login-password" name="senha" type="password" autocomplete="current-password" required></div>
+          <button class="button primary" type="submit">Entrar na plataforma</button>
+          <button class="text-button" id="forgot-password" type="button">Esqueci minha senha</button>
+        </form>
+
+        <form id="register-form" class="form-stack hidden">
+          <div><label for="register-name">Nome</label><input id="register-name" name="nome" maxlength="120" required></div>
+          <div><label for="register-email">E-mail</label><input id="register-email" name="email" type="email" autocomplete="email" required></div>
+          <div><label for="register-password">Senha</label><input id="register-password" name="senha" type="password" minlength="10" maxlength="72" autocomplete="new-password" required><small>Mínimo de 10 caracteres.</small></div>
+          <fieldset><legend>Quero usar a plataforma como</legend><div class="role-options">
+            <label><input type="radio" name="perfil" value="doador" checked><span>Doador</span></label>
+            <label><input type="radio" name="perfil" value="ong"><span>ONG</span></label>
+          </div></fieldset>
+          <label class="check"><input type="checkbox" name="privacidade" required><span>Li e aceito a política de privacidade.</span></label>
+          <button class="button primary" type="submit">Criar minha conta</button>
+        </form>
+        <p id="auth-message" class="message hidden" role="alert"></p>
+      </div>
+    </section>
+
+    <section id="dashboard-view" class="dashboard hidden">
+      <aside class="sidebar">
+        <div><p class="eyebrow">Minha conta</p><h2 id="user-name">Usuário</h2><span id="user-role" class="badge"></span></div>
+        <nav aria-label="Painel">
+          <button class="nav-item active" data-panel="overview">Visão geral</button>
+          <button class="nav-item member-only" data-panel="establishments">Estabelecimentos</button>
+          <button class="nav-item donor-only" data-panel="new-lot">Novo lote</button>
+          <button class="nav-item ong-only" data-panel="available-lots">Alimentos disponíveis</button>
+          <button class="nav-item" data-panel="rescues">Resgates</button>
+          <button class="nav-item admin-only hidden" data-panel="admin">Administração</button>
+          <button class="nav-item admin-only hidden" data-panel="audit">Auditoria</button>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <section class="panel" data-panel-content="overview">
+          <p class="eyebrow">Painel</p><h1 id="welcome-title">Olá!</h1>
+          <p class="lead" id="welcome-copy"></p>
+          <div class="stat-grid">
+            <article class="stat-card"><span>Estabelecimentos</span><strong id="establishment-count">0</strong></article>
+            <article class="stat-card accent"><span id="action-label">Próxima ação</span><strong id="action-value">Cadastrar</strong></article>
+          </div>
+        </section>
+
+        <section class="panel hidden" data-panel-content="establishments">
+          <div class="section-heading"><div><p class="eyebrow">Cadastro</p><h1>Meus estabelecimentos</h1></div><button class="button primary" id="show-establishment-form">Adicionar</button></div>
+          <div id="establishment-list" class="card-grid"></div>
+          <form id="establishment-form" class="surface form-grid hidden">
+            <h2>Novo estabelecimento</h2>
+            <div><label for="trade-name">Nome fantasia</label><input id="trade-name" name="nomeFantasia" required></div>
+            <div><label for="document">CPF ou CNPJ</label><input id="document" name="documento" inputmode="numeric" required></div>
+            <div><label for="contact-email">E-mail de contato</label><input id="contact-email" name="emailContato" type="email"></div>
+            <div><label for="phone">Telefone</label><input id="phone" name="telefoneContato"></div>
+            <div><label for="cep">CEP</label><input id="cep" name="cep" inputmode="numeric" required></div>
+            <div><label for="street">Logradouro</label><input id="street" name="logradouro" required></div>
+            <div><label for="number">Número</label><input id="number" name="numero" required></div>
+            <div><label for="district">Bairro</label><input id="district" name="bairro" required></div>
+            <div><label for="city">Cidade</label><input id="city" name="cidade" required></div>
+            <div><label for="state">UF</label><input id="state" name="uf" maxlength="2" required></div>
+            <div class="form-actions"><button class="button secondary" type="button" id="cancel-establishment">Cancelar</button><button class="button primary" type="submit">Salvar</button></div>
+          </form>
+        </section>
+
+        <section class="panel hidden" data-panel-content="new-lot">
+          <p class="eyebrow">Doação</p><h1>Cadastrar lote de alimentos</h1>
+          <form id="lot-form" class="surface form-grid">
+            <div class="full"><label for="donor-establishment">Estabelecimento doador</label><select id="donor-establishment" name="estabelecimentoDoadorId" required></select></div>
+            <div class="full"><label for="lot-title">Título</label><input id="lot-title" name="titulo" required></div>
+            <div><label for="category">Categoria</label><select id="category" name="categoria" required><option value="frutas_verduras">Frutas e verduras</option><option value="graos_cereais">Grãos e cereais</option><option value="padaria">Padaria</option><option value="laticinios">Laticínios</option><option value="carnes">Carnes</option><option value="refeicoes_prontas">Refeições prontas</option><option value="bebidas">Bebidas</option><option value="outros">Outros</option></select></div>
+            <div><label for="quantity">Quantidade</label><input id="quantity" name="quantidade" type="number" min="0.001" step="0.001" required></div>
+            <div><label for="unit">Unidade</label><select id="unit" name="unidade"><option>kg</option><option>g</option><option>l</option><option>ml</option><option>unidade</option><option>caixa</option><option>porcao</option></select></div>
+            <div><label for="expiry">Validade</label><input id="expiry" name="validadeEm" type="datetime-local" required></div>
+            <div><label for="pickup-start">Início da retirada</label><input id="pickup-start" name="retiradaInicioEm" type="datetime-local" required></div>
+            <div><label for="pickup-end">Fim da retirada</label><input id="pickup-end" name="retiradaFimEm" type="datetime-local" required></div>
+            <div class="full"><label for="description">Descrição</label><textarea id="description" name="descricao" rows="3"></textarea></div>
+            <div class="form-actions"><button class="button primary" type="submit">Publicar lote</button></div>
+          </form>
+        </section>
+
+        <section class="panel hidden" data-panel-content="available-lots">
+          <div class="section-heading"><div><p class="eyebrow">Resgate</p><h1>Alimentos disponíveis</h1></div><button class="button secondary" id="refresh-lots">Atualizar</button></div>
+          <div id="lot-list" class="card-grid"></div>
+        </section>
+        <section class="panel hidden" data-panel-content="rescues">
+          <div class="section-heading"><div><p class="eyebrow">Acompanhamento</p><h1>Meus resgates</h1></div><button class="button secondary" id="refresh-rescues">Atualizar</button></div>
+          <div class="status-legend"><span><i class="dot requested"></i>Solicitada</span><span><i class="dot reserved"></i>Reservada</span><span><i class="dot confirmed"></i>Confirmada</span></div>
+          <div id="rescue-list" class="rescue-list"></div>
+        </section>
+        <section class="panel hidden" data-panel-content="admin">
+          <div class="section-heading"><div><p class="eyebrow">Gestão</p><h1>Administração</h1></div><button class="button primary" id="download-admin-report">Baixar relatório PDF</button></div>
+          <div id="admin-metrics" class="metric-grid"></div>
+          <div class="table-wrap"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Status</th><th>Cadastro</th><th>Ação</th></tr></thead><tbody id="admin-users"></tbody></table></div>
+        </section>
+        <section class="panel hidden" data-panel-content="audit">
+          <div class="section-heading"><div><p class="eyebrow">Rastreabilidade</p><h1>Logs de auditoria</h1></div><button class="button secondary" id="refresh-audit">Atualizar</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Entidade</th><th>Resultado</th></tr></thead><tbody id="audit-list"></tbody></table></div>
+        </section>
+        <p id="dashboard-message" class="toast hidden" role="status"></p>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

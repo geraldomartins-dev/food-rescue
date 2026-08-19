@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: food_rescue
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      NODE_ENV: test
+      PORT: 3000
+      APP_ORIGIN: http://127.0.0.1:3000
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: food_rescue
+      DB_USER: root
+      DB_PASSWORD: root
+      JWT_SECRET: ci-jwt-secret-with-more-than-32-characters
+      DATA_HASH_SECRET: ci-data-secret-with-more-than-32-characters
+      EMAIL_WORKER_ENABLED: "false"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply database schema
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot < database/schema.sql
+          mysql -h 127.0.0.1 -uroot -proot < database/migrations/002_outbox_eventos.sql
+          mysql -h 127.0.0.1 -uroot -proot < database/migrations/003_auth_sessions.sql
+      - run: npm test
+      - name: Start API
+        run: npm start &
+      - name: Wait for API
+        run: |
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:3000/api/v1/health && exit 0
+            sleep 1
+          done
+          exit 1
+      - run: npm run test:e2e
