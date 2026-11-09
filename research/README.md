@@ -2,6 +2,8 @@
 
 ## Avaliador com tempo completo
 
+Para a rodada com as seis mudanças novas, use `node research/evaluate-pilot.mjs --study`. A opção `--prepare` confere os arquivos congelados e prepara a agenda sem abrir conexão com o banco. O [protocolo da rodada](../outputs/protocolo_avaliacao_food_rescue.md) registra os casos, as 72 execuções previstas e as regras de análise. O comando com um número de repetições continua sendo a entrada da calibração histórica.
+
 Execute `node research/evaluate-pilot.mjs 3` na raiz para três repetições dos seis cenários (cinco falhas controladas conhecidas e uma versão sem defeito), comparando ordem original, menor duração histórica, aleatória e saída real do protótipo. São 72 execuções. É necessário MySQL local disponível e as credenciais usuais do projeto no ambiente. O avaliador cria um esquema novo com nome único; só esse esquema recebe dados fictícios e é esvaziado entre execuções. O banco configurado para o aplicativo não é reutilizado. Artefatos e esquema sintético são preservados para auditoria.
 
 O instante inicial precede a geração da ordem. Um reporter envia eventos de conclusão de teste por IPC, e o processo pai mede com relógio monotônico o recebimento da primeira falha. O tempo inclui a geração da ordem, preparação do arquivo e inicialização do Playwright. A preparação do banco e o início do servidor ficam fora da medição para todos os métodos. Para a versão sem defeito, registra-se o tempo completo até o encerramento do executor; tempo até falha e posição do detector ficam nulos.

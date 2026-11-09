@@ -1,0 +1,32 @@
+{
+  "id": "food-rescue-controlled-2026-11-05-v1",
+  "files": {
+    "database/migrations/002_outbox_eventos.sql": "7bd4c0eebe98138cb329dabd8b4587083fff0b8608fa38b2700a32d46e80f317",
+    "database/migrations/003_auth_sessions.sql": "1af68be280c87f90458d141c7383ea57ab503bacd078ead2e7f1683d4079a821",
+    "database/schema.sql": "1cd86edb423257a6bab8abe3b4fa130061327ebb99d01f506d536a8586281cbd",
+    "e2e/prioritization-pilot.spec.js": "091e853ec2a3983d240501692eb84f3a1b4a892cba158b5f561c1c23d823c584",
+    "outputs/protocolo_avaliacao_food_rescue.md": "a0523606a83706f3ac9df7ba5318d6f35fe36f446399ab6fb7dab20fda740e21",
+    "package-lock.json": "005554a8b82e61f9ee4735a31fa28b9df9309436e302f1d20dac7252d4169c0b",
+    "package.json": "4c46f2441fb1ec2d903bbe4e0750affbfa63dc817da193f9217fd31a860dbf35",
+    "playwright.config.js": "65abe2343e742c2de8733b4ba4ff54336d834260314d381b315ef81889cae0b7",
+    "research/evaluate-pilot.mjs": "01f8ea8d9580020b07d2cbc3df3f32f543a4625b455a9866069ccda6a23992ef",
+    "research/pilot-order.mjs": "9b96d54d76cf16f471f89498b445ecbd25b1dc38015a525195e8237ee0727098",
+    "research/pilot-reporter.cjs": "af0e74057c1c6fe7daad2b16351085e4da7a60eb8a8defd6fa7266e1fa8650ea",
+    "research/prioritize-tests.mjs": "1835c94302de0d85052f9b02dd55e6e388040426b69cecb57ffce0980fc6d465",
+    "research/study-cases.json": "092d215a614f3aeaa3ddd66eb50a38f2c3cad78e845d6bab10651deee49c702b",
+    "research/test-catalog.json": "1001d700376b406f40131cdb93b8ca6f2205193dd1204c24b80315fcbbf1e2a9",
+    "src/admin-report-pdf.js": "bb3bf182b72de270f903ef578d981ef5d228e55e4933c56c051a7858ea2c1b16",
+    "src/admin.js": "ea2cf2a9f3bce12bbff5ddac6584c36a5e372264828b3ecbbc63b450983f53b2",
+    "src/app.js": "61689d3563f5ef060073b895bd5d25767c4e20283ef5d13faf7096981ae39abf",
+    "src/auth.js": "35d9012cb49c09a93aa71e3261f7f123c460e1c9e3cb4f44aa36b2d02ef4374f",
+    "src/config.js": "dcef914f7eaa7afb856436e6477263de349351c43c0412cd1c20267669785976",
+    "src/database.js": "13ab4b3bb7d242dce11fc17f51bef8b9493f3b86f08221120c9d6644ab04f93c",
+    "src/email-worker.js": "78867318a2dda5a04a1c3011dbb07c4f46ea45f3fdf22c8efd75ddf2dcf2a4b2",
+    "src/establishments.js": "170355f6255b1d795cbfd03efef5e1cf1ed9f708db230f55a090dbc18e60abd4",
+    "src/http.js": "bc1e94c6ef340e2943d6b0119d8b0d2955de636b8e08334b085ef02d1f0b323b",
+    "src/lots.js": "5e0fcc1b415a382b64265ae0d5c0a845fb3aac946803ba40660c1771db90afd6",
+    "src/receipt-pdf.js": "fa13c9522d219f7725ea1fe11019a6b5d9e109a10880f80b97630cbf0fef9b92",
+    "src/rescues.js": "45d7003f922f2a574c9ce0e408c2c1352b7b2a5977089b488da7882bf8a8c822",
+    "src/server.js": "24c8044fd83a3592b7654bd9493f605fb3bd7f9af083341271dae000e997a32c"
+  }
+}

@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 const input = path.resolve(process.argv[2] ?? '');
 const data = JSON.parse(fs.readFileSync(input, 'utf8'));
+if (data.protocolId) throw new Error('Use the frozen study protocol to analyze this run; this report is for the legacy calibration cases');
 if (data.version !== 2 || !data.completed || data.results.length !== data.schedule.length || data.results.some((row) => !row.valid)) {
   throw new Error('Only a complete validated v2 run can be summarized');
 }

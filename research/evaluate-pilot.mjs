@@ -7,20 +7,39 @@ import { once } from 'node:events';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import mysql from 'mysql2/promise';
-import { env } from '../src/config.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const repeats = Number(process.argv[2] ?? 3);
+const args = process.argv.slice(2);
+const isStudy = args.includes('--study');
+const prepareOnly = args.includes('--prepare');
+if (isStudy ? args.some((arg) => !['--study', '--prepare'].includes(arg)) : args.length > 1 || prepareOnly) {
+  throw new Error('Usage: evaluate-pilot.mjs [repetitions] | --study [--prepare]');
+}
+const studyPath = path.join(root, 'research/study-cases.json');
+const lockPath = path.join(root, 'research/study-lock.json');
+const study = isStudy ? JSON.parse(fs.readFileSync(studyPath, 'utf8')) : null;
+const repeats = study?.repeats ?? Number(args[0] ?? 3);
 if (!Number.isInteger(repeats) || repeats < 1 || repeats > 20) throw new Error('Repetitions must be 1..20');
+const sqlFiles = ['database/schema.sql', 'database/migrations/002_outbox_eventos.sql', 'database/migrations/003_auth_sessions.sql'];
 const id = `${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
 const database = `food_rescue_eval_${id}`;
-const output = path.join(root, 'work', `evaluation-${id}`);
-fs.mkdirSync(output, { recursive: true });
+const output = path.join(root, 'work', `${prepareOnly ? 'study-prepared' : 'evaluation'}-${id}`);
 const catalogPath = path.join(root, 'research/test-catalog.json');
 const hash = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const trackedFiles = ['research/test-catalog.json', 'research/prioritize-tests.mjs',
   'research/pilot-order.mjs', 'research/pilot-reporter.cjs', 'research/evaluate-pilot.mjs',
   'e2e/prioritization-pilot.spec.js', 'playwright.config.js', 'package-lock.json'];
+if (study) {
+  trackedFiles.push('package.json', 'research/study-cases.json', 'outputs/protocolo_avaliacao_food_rescue.md', ...sqlFiles);
+  for (const entry of fs.readdirSync(path.join(root, 'src'), { recursive: true, withFileTypes: true })) {
+    if (entry.isFile()) trackedFiles.push(path.relative(root, path.join(entry.parentPath ?? entry.path, entry.name)).replaceAll('\\', '/'));
+  }
+  const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+  if (lock.id !== study.id || Object.keys(lock.files).length !== trackedFiles.length ||
+      trackedFiles.some((file) => lock.files[file] !== hash(path.join(root, file)))) {
+    throw new Error('Frozen protocol inputs changed. Record a new protocol version before running.');
+  }
+}
 const frozen = Object.fromEntries(trackedFiles.map((file) => [file, hash(path.join(root, file))]));
 const source = fs.readFileSync(path.join(root, 'e2e/prioritization-pilot.spec.js'), 'utf8');
 const blocks = source.split(/(?=^test\('piloto )/m);
@@ -30,7 +49,9 @@ const titles = JSON.parse(fs.readFileSync(catalogPath, 'utf8')).tests.map((test)
 if (tests.length !== 5 || titles.some((title, i) => title !== tests[i]?.title)) throw new Error('Catalog and test source disagree');
 
 // Expected detectors are validation assertions AFTER execution, never ranking inputs.
-const cases = [
+const cases = study?.cases.map((item) => ({
+  ...item, allowedDetectors: item.detectors.map((index) => titles[index])
+})) ?? [
   { name: 'no_fault' },
   { name: 'auth_permission', file: 'app.js', from: "app.get('/api/v1/admin/metricas', authenticate, authorize('admin'),", to: "app.get('/api/v1/admin/metricas', authenticate, authorize('admin', 'doador'),", detector: titles[0] },
   { name: 'establishment_listing', file: 'establishments.js', from: 'FROM estabelecimentos WHERE usuario_responsavel_id=? ORDER BY criado_em DESC', to: 'FROM estabelecimentos WHERE usuario_responsavel_id=0 AND ? IS NOT NULL ORDER BY criado_em DESC', detector: titles[1] },
@@ -38,6 +59,11 @@ const cases = [
   { name: 'reservation_response', file: 'rescues.js', from: "await db.commit(); return { id: requestId, status: 'reservada' };", to: "await db.commit(); return { id: requestId, status: 'solicitada' };", detector: titles[3] },
   { name: 'receipt_content', file: 'app.js', from: "res.type('application/pdf').sendFile(receiptPath(code));", to: "res.type('application/pdf').send('invalid pdf');", detector: titles[4] }
 ];
+if (study && (new Set(cases.map((item) => item.name)).size !== cases.length ||
+    cases.some((item) => !/^[a-z0-9_]+$/.test(item.name) || !/^[a-z-]+\.js$/.test(item.file) ||
+      item.allowedDetectors.some((title) => !title) || item.from === item.to))) {
+  throw new Error('Invalid frozen case definition');
+}
 const reference = path.join(output, 'reference', 'src');
 fs.cpSync(path.join(root, 'src'), reference, { recursive: true });
 for (const item of cases) {
@@ -48,6 +74,10 @@ for (const item of cases) {
     const text = fs.readFileSync(file, 'utf8');
     if (text.split(item.from).length !== 2) throw new Error(`Nonunique mutation: ${item.name}`);
     fs.writeFileSync(file, text.replace(item.from, item.to));
+    if (prepareOnly) {
+      const checked = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
+      if (checked.status !== 0) throw new Error(`Invalid prepared source in ${item.name}: ${checked.stderr}`);
+    }
   }
 }
 
@@ -63,18 +93,34 @@ function shuffle(items, seed) {
 const schedule = [];
 for (let repetition = 1; repetition <= repeats; repetition++) {
   for (const [index, item] of cases.entries()) {
-    const seed = 20261104 + index * 100 + repetition;
-    for (const method of shuffle(['original', 'shortest', 'random', 'prioritized'], seed)) {
+    const seed = (study?.seed ?? 20261104) + index * 100 + repetition;
+    const executionSeed = study ? seed + 1_000_000 : seed;
+    for (const method of shuffle(['original', 'shortest', 'random', 'prioritized'], executionSeed)) {
       schedule.push({ case: item.name, method, repetition, seed });
     }
   }
 }
-const summary = { version: 2, purpose: 'Protocol calibration on previously used controlled cases; not independent effectiveness evaluation',
+const summary = { version: 2, purpose: study ? 'Evaluation on new controlled Food Rescue changes' : 'Protocol calibration on previously used controlled cases; not independent effectiveness evaluation',
   database, node: process.version, platform: process.platform, frozen, repeats,
   metric: 'Parent monotonic elapsed time from order generation start to first failed-test IPC event reception; includes order CLI, spec preparation and test-runner startup. Application startup and database reset excluded equally.',
   schedule, results: [] };
+if (study) Object.assign(summary, {
+  protocolId: study.id, protocolLockSha256: hash(lockPath), baselineCommit: study.baselineCommit,
+  cases: cases.map(({ name, allowedDetectors }) => ({ name, allowedDetectors }))
+});
+if (prepareOnly) {
+  fs.writeFileSync(path.join(output, 'plan.json'), JSON.stringify({
+    protocolId: study.id, protocolLockSha256: summary.protocolLockSha256, frozen, schedule
+  }, null, 2));
+  console.log(`Prepared ${cases.length} cases and ${schedule.length} executions: ${output}`);
+  process.exit(0);
+}
 const save = () => fs.writeFileSync(path.join(output, 'summary.json'), JSON.stringify(summary, null, 2));
 save();
+const { env } = await import('../src/config.js');
+if (study && !['localhost', '127.0.0.1', '::1'].includes(env.DB_HOST)) {
+  throw new Error('The frozen study requires a local MySQL instance');
+}
 
 // A new schema is created exclusively for this invocation. Never reuse or reset
 // an existing schema. Reset can touch only the connection to the newly created one.
@@ -84,12 +130,17 @@ const specPath = path.join(root, 'e2e', `pilot-eval-${id}.spec.js`);
 try {
   connection = await mysql.createConnection({ host: env.DB_HOST, port: env.DB_PORT,
     user: env.DB_USER, password: env.DB_PASSWORD, multipleStatements: true });
+  if (study) {
+    const [[{ version }]] = await connection.query('SELECT VERSION() AS version');
+    summary.databaseVersion = version;
+    save();
+  }
   const [existing] = await connection.query('SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME=?', [database]);
   if (existing.length || database === env.DB_NAME) throw new Error('Refusing existing or configured database');
   await connection.query(`CREATE DATABASE \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
   owned = true;
   await connection.query(`USE \`${database}\``);
-  for (const file of ['database/schema.sql', 'database/migrations/002_outbox_eventos.sql', 'database/migrations/003_auth_sessions.sql']) {
+  for (const file of sqlFiles) {
     const sql = fs.readFileSync(path.join(root, file), 'utf8')
       .replace(/CREATE DATABASE IF NOT EXISTS food_rescue[\s\S]*?;/i, '').replace(/\bUSE food_rescue\s*;/gi, '');
     await connection.query(sql);
@@ -159,11 +210,14 @@ try {
       const completedAtMs = performance.now() - started;
       const item = cases.find((item) => item.name === entry.case);
       const failed = events.filter((event) => event.status !== 'passed');
-      const valid = item.detector
-        ? exitCode === 1 && !signal && failed.length === 1 && failed[0].title === item.detector && failed[0].status === 'failed' && events.at(-1)?.title === item.detector
-        : exitCode === 0 && events.length === titles.length && failed.length === 0;
+      const allowedDetectors = item.allowedDetectors ?? (item.detector ? [item.detector] : []);
+      const fullPass = exitCode === 0 && !signal && events.length === titles.length && failed.length === 0;
+      const expectedFailure = exitCode === 1 && !signal && failed.length === 1 &&
+        allowedDetectors.includes(failed[0].title) && failed[0].status === 'failed' && events.at(-1) === failed[0];
+      const valid = (expectedFailure || (fullPass && (study || allowedDetectors.length === 0))) &&
+        events.every((event, index) => event.title === order[index]);
       const result = { ...entry, order, orderGenerationMs, timeToFirstFailureMs: detectedAtMs,
-        fullSuiteWallMs: !item.detector && valid ? completedAtMs : null,
+        fullSuiteWallMs: fullPass && valid ? completedAtMs : null,
         processWallMs: completedAtMs, detectorPosition: detectedAtMs === null ? null : events.findIndex((event) => event.status === 'failed') + 1,
         events, exitCode, signal, valid: valid && errors.length === 0, errors };
       summary.results.push(result);
