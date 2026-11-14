@@ -1,0 +1,35 @@
+{
+  "source": "Median duration of passing runs in the initial five-fault matrix; milliseconds",
+  "tests": [
+    {
+      "title": "piloto auth bloqueia acesso de doador à administração",
+      "costMs": 551,
+      "routes": ["/api/v1/admin/metricas"],
+      "symbols": []
+    },
+    {
+      "title": "piloto estabelecimentos lista o cadastro do próprio doador",
+      "costMs": 413,
+      "routes": ["/api/v1/estabelecimentos/meus"],
+      "symbols": ["src/establishments.js#listOwnEstablishments"]
+    },
+    {
+      "title": "piloto lotes mostra o lote disponível para uma ONG",
+      "costMs": 849,
+      "routes": ["/api/v1/lotes"],
+      "symbols": ["src/lots.js#listAvailableLots"]
+    },
+    {
+      "title": "piloto reservas muda o estado da solicitação",
+      "costMs": 871,
+      "routes": ["/api/v1/solicitacoes/:id/reserva"],
+      "symbols": ["src/rescues.js#reserveRescue"]
+    },
+    {
+      "title": "piloto confirmação gera comprovante PDF",
+      "costMs": 1416,
+      "routes": ["/api/v1/solicitacoes/:id/comprovante"],
+      "symbols": ["src/receipt-pdf.js#generateReceiptPdf"]
+    }
+  ]
+}
