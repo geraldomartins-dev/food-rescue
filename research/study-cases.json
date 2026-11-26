@@ -1,0 +1,50 @@
+{
+  "id": "food-rescue-controlled-2026-11-05-v1",
+  "baselineCommit": "fea43beaf1b83bb787c9f08c3d23acdbe4ac0db2",
+  "repeats": 3,
+  "seed": 20261105,
+  "cases": [
+    {
+      "name": "pickup_window_as_visibility",
+      "file": "lots.js",
+      "from": "ORDER BY l.validade_em ASC LIMIT 100",
+      "to": "AND l.retirada_inicio_em<=UTC_TIMESTAMP(3)\n     ORDER BY l.validade_em ASC LIMIT 100",
+      "detectors": [2]
+    },
+    {
+      "name": "owner_check_inverted",
+      "file": "rescues.js",
+      "from": "!admin && rescue.usuario_responsavel_id !== userId",
+      "to": "!admin && rescue.usuario_responsavel_id === userId",
+      "detectors": [3, 4]
+    },
+    {
+      "name": "lot_created_expired",
+      "file": "lots.js",
+      "from": "new Date(input.validadeEm)",
+      "to": "new Date(Date.now() - 60_000)",
+      "detectors": [2, 3, 4]
+    },
+    {
+      "name": "receipt_requires_reserved_status",
+      "file": "rescues.js",
+      "from": "WHERE s.id=? AND s.status='confirmada'",
+      "to": "WHERE s.id=? AND s.status='reservada'",
+      "detectors": [4]
+    },
+    {
+      "name": "establishment_sort_tiebreak",
+      "file": "establishments.js",
+      "from": "ORDER BY criado_em DESC",
+      "to": "ORDER BY criado_em DESC, id DESC",
+      "detectors": []
+    },
+    {
+      "name": "lot_response_refactor",
+      "file": "lots.js",
+      "from": "return { id: result.insertId, status: 'disponivel' };",
+      "to": "const { insertId: id } = result;\n  return { id, status: 'disponivel' };",
+      "detectors": []
+    }
+  ]
+}
